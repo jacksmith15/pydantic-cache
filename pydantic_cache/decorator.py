@@ -1,15 +1,20 @@
+import inspect
 import json
 from collections.abc import Callable
 from datetime import timedelta
 from hashlib import sha256
-from inspect import signature
 from pathlib import Path
 from typing import ParamSpec, TypeVar
 
-from pydantic import TypeAdapter
+from pydantic import PydanticSchemaGenerationError, TypeAdapter
 from pydantic_core import to_jsonable_python
 
 from pydantic_cache.backend import Backend, DiskBackend
+
+
+class PydanticCacheError(Exception):
+    pass
+
 
 Params = ParamSpec("Params")
 Return = TypeVar("Return")
@@ -17,8 +22,17 @@ Return = TypeVar("Return")
 
 def cache(backend: Backend) -> Callable[[Callable[Params, Return]], Callable[Params, Return]]:
     def decorator(function: Callable[Params, Return]) -> Callable[Params, Return]:
-        function_signature = signature(function)
-        result_adapter = TypeAdapter(function_signature.return_annotation)
+        function_signature = inspect.signature(function)
+        if function_signature.return_annotation is inspect._empty:
+            raise PydanticCacheError("Decorated function must have a return type annotation")
+
+        try:
+            result_adapter = TypeAdapter(function_signature.return_annotation)
+        except PydanticSchemaGenerationError as exc:
+            raise PydanticCacheError(
+                f"Function return type {function_signature.return_annotation} does not support serialization with "
+                "Pydantic"
+            ) from exc
 
         def get_key(*args: Params.args, **kwargs: Params.kwargs) -> str:
             return sha256(

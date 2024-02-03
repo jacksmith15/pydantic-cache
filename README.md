@@ -28,5 +28,11 @@ Run tests:
 poetry run inv verify
 ```
 
+### TODOs
+
+- [ ] `asyncio` support
+- [ ] Redis back-end
+
 # License
+
 This project is distributed under the MIT license.

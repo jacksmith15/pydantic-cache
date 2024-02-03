@@ -2,9 +2,10 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pytest
 from pydantic import BaseModel
 
-from pydantic_cache import disk_cache
+from pydantic_cache import PydanticCacheError, disk_cache
 
 
 class TestDiskCache:
@@ -103,3 +104,44 @@ class TestDiskCache:
 
         # THEN the side effect should be triggered twice
         assert side_effect == 2
+
+    @staticmethod
+    def should_support_no_arguments(tmp_path: Path) -> None:
+        # GIVEN a function with no arguments
+        side_effect = 0
+
+        @disk_cache(path=tmp_path, ttl=timedelta(days=1))
+        def my_function() -> bool:
+            nonlocal side_effect
+            side_effect += 1
+            return True
+
+        # WHEN I invoke the function twice
+        assert my_function() is True
+        assert my_function() is True
+
+        # THEN the side_effect should only be triggered once
+        assert side_effect == 1
+
+    @staticmethod
+    def should_fail_gracefully_on_missing_type_annotation(tmp_path: Path) -> None:
+        with pytest.raises(PydanticCacheError) as exc_info:
+
+            @disk_cache(tmp_path, ttl=timedelta(days=1))
+            def my_function():
+                return True
+
+        assert str(exc_info.value) == "Decorated function must have a return type annotation"
+
+    @staticmethod
+    def should_fail_gracefully_on_unsupported_type_annotation(tmp_path: Path) -> None:
+        class CustomType:
+            pass
+
+        with pytest.raises(PydanticCacheError) as exc_info:
+
+            @disk_cache(tmp_path, ttl=timedelta(days=1))
+            def my_function() -> CustomType:
+                return CustomType()
+
+        assert "does not support serialization with Pydantic" in str(exc_info.value)
