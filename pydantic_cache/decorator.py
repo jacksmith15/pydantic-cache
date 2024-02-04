@@ -76,6 +76,7 @@ def cache(
 
         else:
 
+            @wraps(function)
             def wrapper(*args: Params.args, **kwargs: Params.kwargs) -> Return:
                 backend = get_backend()
                 if isinstance(backend, AsyncBackend):
