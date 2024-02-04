@@ -475,6 +475,28 @@ files = [
 tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipython", "littleutils", "pytest", "rich"]
 
 [[package]]
+name = "fakeredis"
+version = "2.21.0"
+description = "Python implementation of redis API, can be used for testing purposes."
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "fakeredis-2.21.0-py3-none-any.whl", hash = "sha256:dcea37c57a1aaf39bed1227aea20de052fb19dc030ccac3f8a73324b2ec90cee"},
+    {file = "fakeredis-2.21.0.tar.gz", hash = "sha256:1b3ff9c068e39c43725f2373b105228cd03e6a50fc79a5698e852b7601b1201b"},
+]
+
+[package.dependencies]
+redis = ">=4"
+sortedcontainers = ">=2,<3"
+
+[package.extras]
+bf = ["pyprobables (>=0.6,<0.7)"]
+cf = ["pyprobables (>=0.6,<0.7)"]
+json = ["jsonpath-ng (>=1.6,<2.0)"]
+lua = ["lupa (>=1.14,<3.0)"]
+probabilistic = ["pyprobables (>=0.6,<0.7)"]
+
+[[package]]
 name = "idna"
 version = "3.6"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -1022,6 +1044,17 @@ files = [
 ]
 
 [[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+description = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
+    {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
+]
+
+[[package]]
 name = "stack-data"
 version = "0.6.3"
 description = "Extract data from python stack frames and tracebacks for informative displays"
@@ -1207,4 +1240,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "4702750b991be0238602b0371cd039c47400309582a6e016762c01deea0d8170"
+content-hash = "9266312b580ee74b718c2800ae3c239431a594e35a5f2fcf2c0b8e78cb04ff02"
