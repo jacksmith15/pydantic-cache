@@ -35,6 +35,8 @@ termcolor = "^2.3.0"
 toml = "^0.10"
 types-requests = "^2.31.0.2"
 types-toml = "^0.10"
+redis = "^5.0.1"
+types-redis = "^4.6.0.20240106"
 
 [tool.autoflake]
 recursive = true

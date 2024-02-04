@@ -2,13 +2,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
-
-class Backend:
-    def get(self, key: str) -> str:
-        raise NotImplementedError  # pragma: no cover
-
-    def write(self, key: str, value: str) -> None:
-        raise NotImplementedError  # pragma: no cover
+from pydantic_cache.backend.base import Backend
 
 
 class DiskBackend(Backend):
