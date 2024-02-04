@@ -4,9 +4,6 @@ from pathlib import Path
 
 
 class Backend:
-    def exists(self, key: str) -> bool:
-        raise NotImplementedError  # pragma: no cover
-
     def get(self, key: str) -> str:
         raise NotImplementedError  # pragma: no cover
 
@@ -19,19 +16,14 @@ class DiskBackend(Backend):
         self.directory = Path(directory)
         self.ttl = ttl
 
-    def exists(self, key: str) -> bool:
+    def get(self, key: str) -> str:
         path = self.directory / f"{key}.json"
         if not path.exists():
-            return False
+            raise KeyError(key)
         content = json.loads(path.read_text(encoding="utf-8"))
         timestamp = datetime.fromisoformat(content["timestamp"])
         if datetime.now() - timestamp > self.ttl:
-            return False
-        return True
-
-    def get(self, key: str) -> str:
-        path = self.directory / f"{key}.json"
-        content = json.loads(path.read_text(encoding="utf-8"))
+            raise KeyError(key)
         return content["value"]
 
     def write(self, key: str, value: str) -> None:

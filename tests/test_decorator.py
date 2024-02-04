@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
-from pydantic_cache import PydanticCacheError, disk_cache
+from pydantic_cache import DiskBackend, PydanticCacheError, cache, disk_cache
 
 
 class TestDiskCache:
@@ -145,3 +145,23 @@ class TestDiskCache:
                 return CustomType()
 
         assert "does not support serialization with Pydantic" in str(exc_info.value)
+
+
+class TestCache:
+    @staticmethod
+    def should_allow_deferring_backend_resolution(tmp_path: Path) -> None:
+        # GIVEN a function with deferred cache backend resolution
+        side_effect = 0
+
+        @cache(backend=lambda: DiskBackend(tmp_path, ttl=timedelta(days=1)))
+        def my_function(value: int) -> int:
+            nonlocal side_effect
+            side_effect += 1
+            return value * 2
+
+        # WHEN I invoke the function twice
+        assert my_function(3) == 6
+        assert my_function(3) == 6
+
+        # THEN the side effect should only be triggered once
+        assert side_effect == 1
