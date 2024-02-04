@@ -1,7 +1,9 @@
+import asyncio
 import inspect
 import json
 from collections.abc import Callable
 from datetime import timedelta
+from functools import wraps
 from hashlib import sha256
 from pathlib import Path
 from typing import ParamSpec, TypeVar
@@ -9,7 +11,7 @@ from typing import ParamSpec, TypeVar
 from pydantic import PydanticSchemaGenerationError, TypeAdapter
 from pydantic_core import to_jsonable_python
 
-from pydantic_cache.backend import Backend, DiskBackend
+from pydantic_cache.backend import AsyncBackend, Backend, DiskBackend
 
 
 class PydanticCacheError(Exception):
@@ -20,13 +22,17 @@ Params = ParamSpec("Params")
 Return = TypeVar("Return")
 
 
-def cache(backend: Backend | Callable[[], Backend]) -> Callable[[Callable[Params, Return]], Callable[Params, Return]]:
-    def get_backend() -> Backend:
-        if isinstance(backend, Backend) or not callable(backend):
+def cache(
+    backend: Backend | AsyncBackend | Callable[[], Backend | AsyncBackend]
+) -> Callable[[Callable[Params, Return]], Callable[Params, Return]]:
+    def get_backend() -> Backend | AsyncBackend | AsyncBackend:
+        if isinstance(backend, (Backend, AsyncBackend)) or not callable(backend):
             return backend
         return backend()
 
     def decorator(function: Callable[Params, Return]) -> Callable[Params, Return]:
+        if isinstance(backend, AsyncBackend) and not asyncio.iscoroutinefunction(function):
+            raise PydanticCacheError("Can't use an async cache backend on a synchronous function.")
         function_signature = inspect.signature(function)
         if function_signature.return_annotation is inspect._empty:
             raise PydanticCacheError("Decorated function must have a return type annotation")
@@ -48,15 +54,39 @@ def cache(backend: Backend | Callable[[], Backend]) -> Callable[[Callable[Params
                 ).encode("utf-8")
             ).hexdigest()
 
-        def wrapper(*args: Params.args, **kwargs: Params.kwargs) -> Return:
-            backend = get_backend()
-            key = get_key(*args, **kwargs)
-            try:
-                return result_adapter.validate_python(json.loads(backend.get(key)))
-            except KeyError:
-                result = function(*args, **kwargs)
-                backend.write(key, json.dumps(result, default=to_jsonable_python))
-                return result
+        if asyncio.iscoroutinefunction(function):
+
+            @wraps(function)
+            async def wrapper(*args, **kwargs):
+                backend = get_backend()
+                key = get_key(*args, **kwargs)
+                if isinstance(backend, AsyncBackend):
+                    try:
+                        return result_adapter.validate_python(json.loads(await backend.get(key)))
+                    except KeyError:
+                        result = await function(*args, **kwargs)
+                        await backend.write(key, json.dumps(result, default=to_jsonable_python))
+                        return result
+                try:
+                    return result_adapter.validate_python(json.loads(backend.get(key)))
+                except KeyError:
+                    result = await function(*args, **kwargs)
+                    backend.write(key, json.dumps(result, default=to_jsonable_python))
+                    return result
+
+        else:
+
+            def wrapper(*args: Params.args, **kwargs: Params.kwargs) -> Return:
+                backend = get_backend()
+                if isinstance(backend, AsyncBackend):
+                    raise PydanticCacheError("Can't use an async cache backend on a synchronous function.")
+                key = get_key(*args, **kwargs)
+                try:
+                    return result_adapter.validate_python(json.loads(backend.get(key)))
+                except KeyError:
+                    result = function(*args, **kwargs)
+                    backend.write(key, json.dumps(result, default=to_jsonable_python))
+                    return result
 
         return wrapper
 
