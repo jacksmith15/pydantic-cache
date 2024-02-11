@@ -4,7 +4,13 @@ Cache results of Python functions, with support for serialization of rich data t
 
 Supports caching to disk or Redis by default, but additional caching backends can easily be added.
 
-## Examples
+## Installation
+
+```bash
+pip install pydantic-cache
+```
+
+## Usage
 
 ### Basic usage
 
@@ -139,16 +145,6 @@ class AioRedisBackend(AsyncBackend):
 @cache(backend=AioRedisBackend(...))
 async def my_function() -> dict:
     return await asyncio.sleep(0, {})
-```
-
-## Installation
-
-This project is not currently packaged and so must be installed manually.
-
-Clone the project with the following command:
-
-```
-git clone https://github.com/jacksmith15/pydantic-cache.git
 ```
 
 ## Development
