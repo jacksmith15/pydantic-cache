@@ -13,10 +13,14 @@ Types of changes are:
 * **Fixed** for any bug fixes.
 
 ## [Unreleased]
+
+
+## [0.1.0] - 2024-02-11
 ### Added
 * Project started :)
 
-[Unreleased]: https://github.com/jacksmith15/pydantic-cache/compare/initial..HEAD
+[Unreleased]: https://github.com/jacksmith15/pydantic-cache/compare/0.1.0..HEAD
+[0.1.0]: https://github.com/jacksmith15/pydantic-cache/compare/initial..0.1.0
 
 [Keep a Changelog]: http://keepachangelog.com/en/1.0.0/
 [Semantic Versioning]: http://semver.org/spec/v2.0.0.html
